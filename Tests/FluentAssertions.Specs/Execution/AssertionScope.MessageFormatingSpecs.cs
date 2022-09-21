@@ -305,6 +305,52 @@ public partial class AssertionScopeSpecs
     }
 
     [Fact]
+    public void Message_should_have_nested_reportable_values_appended_at_the_end()
+    {
+        // Arrange
+        var scope = new AssertionScope();
+        scope.AddReportable("SomeKey", "SomeValue");
+        scope.AddReportable("AnotherKey", "AnotherValue");
+
+        using (var nestedScope = new AssertionScope())
+        {
+            nestedScope.AddReportable("NestedKey", "NestedValue");
+        }
+
+        AssertionScope.Current.FailWith("{SomeKey}{AnotherKey}{NestedKey}");
+
+        // Act
+        Action act = scope.Dispose;
+
+        // Assert
+        act.Should().ThrowExactly<XunitException>()
+            .WithMessage("*With SomeKey:\nSomeValue\nWith AnotherKey:\nAnotherValue\nWith NestedKey:\nNestedValue");
+    }
+
+    [Fact]
+    public void Nested_reportable_values_should_replace_outer_reportable_values_with_matching_key_and_append_at_the_end_of_message()
+    {
+        // Arrange
+        var scope = new AssertionScope();
+        scope.AddReportable("SomeKey", "SomeValue");
+        scope.AddReportable("AnotherKey", "AnotherValue");
+
+        using (var nestedScope = new AssertionScope())
+        {
+            nestedScope.AddReportable("AnotherKey", "NestedValue");
+        }
+
+        AssertionScope.Current.FailWith("{SomeKey}{AnotherKey}{NestedKey}");
+
+        // Act
+        Action act = scope.Dispose;
+
+        // Assert
+        act.Should().ThrowExactly<XunitException>()
+            .WithMessage("*With SomeKey:\nSomeValue\nWith AnotherKey:\nNestedValue");
+    }
+
+    [Fact]
     public void Message_should_not_have_nonreportable_values_appended_at_the_end()
     {
         // Arrange

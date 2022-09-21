@@ -395,6 +395,12 @@ public sealed class AssertionScope : IAssertionScope
                 parent.assertionStrategy.HandleFailure(failureMessage);
             }
 
+            foreach (var reportable in contextData.GetReportable())
+            {
+                // Will overwrite any existing reportable with the same key
+                parent.AddReportable(reportable.Key, reportable.Value.ToString());
+            }
+
             parent.AppendTracing(tracing.ToString());
 
             parent = null;
